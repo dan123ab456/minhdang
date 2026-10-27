@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Bắt Mục Tiêu</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #141e30, #243b55);
+            color: white;
+            text-align: center;
+            min-height: 100vh;
+            padding: 25px 12px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .description {
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px auto;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: #ffffff18;
+            border: 1px solid #ffffff30;
+            border-radius: 12px;
+            padding: 15px 25px;
+            min-width: 120px;
+        }
+
+        .stat p {
+            color: #bbb;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat h2 {
+            color: #00ffcc;
+            font-size: 28px;
+        }
+
+        #gameArea {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            height: 400px;
+            margin: 20px auto;
+            background: #0b1220;
+            border: 3px solid #00ffcc;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 25px #00ffcc30;
+        }
+
+        #target {
+            position: absolute;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #ff4757;
+            box-shadow: 0 0 20px #ff4757;
+            cursor: pointer;
+            user-select: none;
+            font-size: 27px;
+            transition: left 0.12s, top 0.12s;
+        }
+
+        #target:hover {
+            transform: scale(1.1);
+        }
+
+        button {
+            background: #00d9a6;
+            color: #102020;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #00ffcc;
+            transform: scale(1.04);
+        }
+
+        #message {
+            margin: 18px auto;
+            min-height: 24px;
+            font-size: 17px;
+        }
+
+        .hint {
+            color: #aaa;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 500px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            #gameArea {
+                height: 350px;
+            }
+
+            .stat {
+                padding: 12px 18px;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>🎯 BẮT MỤC TIÊU</h1>
+    <p class="description">
+        Nhấn vào mục tiêu càng nhiều càng tốt trong 30 giây!
+    </p>
+
+    <div class="stats">
+        <div class="stat">
+            <p>🏆 Điểm số</p>
+            <h2 id="score">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>⏱️ Thời gian</p>
+            <h2 id="time">30</h2>
+        </div>
+
+        <div class="stat">
+            <p>⭐ Kỷ lục</p>
+            <h2 id="best">0</h2>
+        </div>
+    </div>
+
+    <div id="gameArea">
+        <div id="target">🎯</div>
+    </div>
+
+    <button id="startButton" onclick="startGame()">
+        ▶ BẮT ĐẦU CHƠI
+    </button>
+
+    <p id="message">Nhấn nút để bắt đầu trò chơi!</p>
+
+    <p class="hint">
+        Mẹo: Mục tiêu sẽ xuất hiện ở những vị trí ngẫu nhiên.
+    </p>
+
+    <script>
+        const gameArea = document.getElementById("gameArea");
+        const target = document.getElementById("target");
+        const scoreText = document.getElementById("score");
+        const timeText = document.getElementById("time");
+        const bestText = document.getElementById("best");
+        const message = document.getElementById("message");
+        const startButton = document.getElementById("startButton");
+
+        let score = 0;
+        let timeLeft = 30;
+        let playing = false;
+        let timer = null;
+        let moveTimer = null;
+
+        let best = 0;
+
+        try {
+            best = Number(localStorage.getItem("bestScore")) || 0;
+        } catch (error) {
+            best = 0;
+        }
+
+        bestText.textContent = best;
+
+        function moveTarget() {
+            const maxX = gameArea.clientWidth - target.offsetWidth;
+            const maxY = gameArea.clientHeight - target.offsetHeight;
+
+            const x = Math.random() * Math.max(0, maxX);
+            const y = Math.random() * Math.max(0, maxY);
+
+            target.style.left = x + "px";
+            target.style.top = y + "px";
+        }
+
+        function startGame() {
+            if (playing) return;
+
+            clearInterval(timer);
+            clearInterval(moveTimer);
+
+            score = 0;
+            timeLeft = 30;
+            playing = true;
+
+            scoreText.textContent = score;
+            timeText.textContent = timeLeft;
+            message.textContent = "🔥 Bắt mục tiêu ngay!";
+            startButton.textContent = "🎮 ĐANG CHƠI...";
+            startButton.disabled = true;
+            startButton.style.opacity = "0.6";
+
+            target.style.display = "flex";
+            moveTarget();
+
+            moveTimer = setInterval(moveTarget, 750);
+
+            timer = setInterval(function () {
+                timeLeft--;
+                timeText.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        target.addEventListener("click", function () {
+            if (!playing) return;
+
+            score++;
+            scoreText.textContent = score;
+
+            message.textContent = "🎉 Tuyệt vời! +1 điểm";
+            moveTarget();
+
+            // Mục tiêu di chuyển nhanh hơn khi điểm tăng.
+            if (score % 5 === 0) {
+                clearInterval(moveTimer);
+
+                const speed = Math.max(250, 750 - score * 10);
+                moveTimer = setInterval(moveTarget, speed);
+
+                message.textContent = "⚡ Combo! Bạn đang rất nhanh!";
+            }
+        });
+
+        function endGame() {
+            playing = false;
+
+            clearInterval(timer);
+            clearInterval(moveTimer);
+
+            target.style.display = "none";
+            startButton.disabled = false;
+            startButton.style.opacity = "1";
+            startButton.textContent = "🔄 CHƠI LẠI";
+
+            if (score > best) {
+                best = score;
+                bestText.textContent = best;
+
+                try {
+                    localStorage.setItem("bestScore", best);
+                } catch (error) {
+                    // Game vẫn hoạt động nếu không lưu được kỷ lục.
+                }
+
+                message.textContent =
+                    "🏆 KỶ LỤC MỚI! Bạn đạt " + score + " điểm!";
+            } else {
+                message.textContent =
+                    "⏰ Hết giờ! Bạn đạt " + score + " điểm. Thử lại nhé!";
+            }
+        }
+    </script>
+
+</body>
+</html>
